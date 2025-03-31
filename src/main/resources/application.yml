@@ -3,25 +3,30 @@ spring:
     name: ${APP_NAME}
     jwt:
       secretKey: ${JWT_SECRET_KEY}
+      expiration-time: ${JWT_EXPIRATION_DELAY}
+
 
   server:
     port: ${SERVER_PORT}
 
   datasource:
-    url: jdbc:${DB_CONNECTION}://${DB_HOST}:${DB_PORT}/postgres?currentSchema=${DB_DATABASE}
+    url: jdbc:${DB_CONNECTION}://${DB_HOST}:${DB_PORT}/persevero_db?currentSchema=v1
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
-    show_sql: true
+    show-sql: true
     generate-ddl: true
     open-in-view: false
     hibernate:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+#      ddl-auto: create-only
       ddl-auto: update
     properties:
       hibernate:
         format_sql: true
+        default_schema: v1
 
 management:
   endpoints:
