@@ -6,8 +6,6 @@ import com.dyns.persevero.enums.MuscleType;
 import com.dyns.persevero.fixture.ExerciseFixture;
 import com.dyns.persevero.fixture.MuscleFixture;
 import com.dyns.persevero.fixture.MuscleGroupFixture;
-import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,12 +18,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@Slf4j
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -43,13 +39,14 @@ public class ExerciseRepositoryIntegrationTests {
     protected MuscleGroupRepository muscleGroupRepository;
     private final MuscleGroupFixture muscleGroupFixture = new MuscleGroupFixture();
     private final Set<Muscle> muscles = new HashSet<>();
-    private Set<Muscle> muscleSet = new HashSet<>();
 
     @BeforeEach
     public void init() {
+        // Save all muscle groups in the test db.
         muscleGroupFixture.getAll()
                 .forEach(mg -> muscleGroupRepository.save(mg));
 
+        // Save all muscles in the test db assigning one random muscle group to each.
         muscleFixture.getAll(true)
                 .forEach(m -> {
                     m.setMuscleGroup(muscleGroupFixture.getOne());
@@ -57,9 +54,10 @@ public class ExerciseRepositoryIntegrationTests {
                     muscles.add(m);
                 });
 
-        muscleSet = muscles.stream().filter(
-                m -> m.getName().equals(MuscleType.BICEPS) || m.getName().equals(MuscleType.TRICEPS)
-        ).collect(Collectors.toSet());
+        // Keep only two muscles to make tests easier to debug.
+        muscles.removeIf(
+                m -> !m.getName().equals(MuscleType.BICEPS) && !m.getName().equals(MuscleType.TRICEPS)
+        );
     }
 
     @Nested
@@ -71,7 +69,6 @@ public class ExerciseRepositoryIntegrationTests {
         public void shouldSaveAndRetrievePersistedExercise() {
             Exercise exercise = exerciseFixture.getOne();
             Exercise savedExercise = underTest.save(exercise);
-            log.info("Saved exercise : {}", savedExercise);
 
             assertThat(savedExercise).isEqualTo(exercise);
             assertThat(underTest.findById(savedExercise.getId())).isPresent();
@@ -127,7 +124,6 @@ public class ExerciseRepositoryIntegrationTests {
             exerciseFixture.getMany().forEach(
                     e -> {
                         Exercise savedExercise = underTest.save(e);
-                        log.info(savedExercise.toString());
                     }
             );
 
@@ -151,9 +147,8 @@ public class ExerciseRepositoryIntegrationTests {
         public void init() {
             exerciseFixture.getMany().forEach(
                     e -> {
-                        e.setMuscles(muscleSet);
+                        e.setMuscles(muscles);
                         Exercise savedExercise = underTest.save(e);
-                        log.info(savedExercise.toString());
                         savedExercises.add(savedExercise);
                     }
             );
@@ -200,13 +195,7 @@ public class ExerciseRepositoryIntegrationTests {
             savedExercise.setSets(4);
             savedExercise.setReps(12);
             savedExercise.setWeight(12.0f);
-//            log.info(savedExercise.getMuscles().toString());
-//            log.info(muscleSet.toString());
-//
-//            Hibernate.initialize(savedExercise.getMuscles());
-            savedExercise.getMuscles().addAll(muscleSet);
-            log.info(savedExercise.getMuscles().toString());
-
+            savedExercise.getMuscles().addAll(muscles);
 
             Exercise updatedExercise = underTest.save(savedExercise);
 
@@ -215,6 +204,7 @@ public class ExerciseRepositoryIntegrationTests {
             assertThat(updatedExercise.getSets()).isEqualTo(4);
             assertThat(updatedExercise.getReps()).isEqualTo(12);
             assertThat(updatedExercise.getWeight()).isEqualTo(12.0f);
+            assertThat(savedExercise.getMuscles()).isEqualTo(updatedExercise.getMuscles());
         }
 
     }
