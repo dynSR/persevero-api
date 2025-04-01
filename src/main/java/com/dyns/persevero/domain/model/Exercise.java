@@ -6,6 +6,7 @@ import org.apache.logging.log4j.util.Strings;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -54,4 +55,15 @@ public class Exercise implements Serializable {
     )
     private Set<Muscle> muscles;
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Exercise exercise = (Exercise) o;
+        return Objects.equals(name, exercise.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name);
+    }
 }

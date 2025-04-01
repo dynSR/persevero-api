@@ -4,6 +4,7 @@ import com.dyns.persevero.enums.MuscleGroupType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,4 +32,17 @@ public class MuscleGroup {
 
     @OneToMany(mappedBy = "muscleGroup")
     Set<Muscle> muscles;
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        MuscleGroup that = (MuscleGroup) o;
+        return name == that.name;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name);
+    }
+
 }
