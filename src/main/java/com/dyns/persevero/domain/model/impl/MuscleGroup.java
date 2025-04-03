@@ -1,6 +1,8 @@
-package com.dyns.persevero.domain.model;
+package com.dyns.persevero.domain.model.impl;
 
-import com.dyns.persevero.enums.MuscleGroupType;
+import com.dyns.persevero.domain.model.Model;
+import com.dyns.persevero.enums.MuscleGroupName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,21 +18,25 @@ import java.util.UUID;
 @Builder
 @Entity
 @Table(name = "muscle_groups")
-public class MuscleGroup {
+public class MuscleGroup implements Model<UUID, MuscleGroupName> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false)
-    private UUID id = UUID.randomUUID();
+    private UUID id;
 
     @Column(
             nullable = false,
             unique = true
     )
     @Enumerated(EnumType.STRING)
-    private MuscleGroupType name = MuscleGroupType.NONE;
+    private MuscleGroupName name;
 
-    @OneToMany(mappedBy = "muscleGroup")
+    @OneToMany(
+            cascade = {CascadeType.MERGE, CascadeType.REMOVE},
+            mappedBy = "muscleGroup",
+            fetch = FetchType.LAZY
+    )
     Set<Muscle> muscles;
 
     @Override
@@ -45,4 +51,8 @@ public class MuscleGroup {
         return Objects.hashCode(name);
     }
 
+    @Override
+    public Class<?> getNameClass() {
+        return name.getClass();
+    }
 }

@@ -1,11 +1,10 @@
-package com.dyns.persevero.domain.model;
+package com.dyns.persevero.domain.model.impl;
 
+import com.dyns.persevero.domain.model.Model;
 import jakarta.persistence.*;
 import lombok.*;
-import org.apache.logging.log4j.util.Strings;
 
 import java.io.Serial;
-import java.io.Serializable;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -18,7 +17,7 @@ import java.util.UUID;
 @Builder
 @Entity
 @Table(name = "exercises")
-public class Exercise implements Serializable {
+public class Exercise implements Model<UUID, String> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -26,34 +25,44 @@ public class Exercise implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false)
-    private UUID id = UUID.randomUUID();
+    private UUID id;
 
     @Column(
             length = 150,
             nullable = false,
             unique = true
     )
-    private String name = Strings.EMPTY;
+    private String name;
 
     @Column(columnDefinition = "TEXT")
-    private String description = Strings.EMPTY;
+    private String description;
 
     @Column(columnDefinition = "SMALLINT DEFAULT 1", nullable = false)
-    private int sets = 1;
+    private int sets;
 
     @Column(columnDefinition = "SMALLINT DEFAULT 1", nullable = false)
-    private int reps = 1;
+    private int reps;
 
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 1", nullable = false)
-    private float weight = 1.0f;
+    private float weight;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
-            name = "exercise_muscle_group",
-            joinColumns = @JoinColumn(name = "muscle_group_id"),
-            inverseJoinColumns = @JoinColumn(name = "exercise_id")
+            name = "muscle_exercise",
+            joinColumns = @JoinColumn(name = "muscle_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id")
     )
     private Set<Muscle> muscles;
+
+    public void addMuscle(Muscle muscle) {
+        muscles.add(muscle);
+        muscle.getExercises().add(this);
+    }
+
+    public void removeMuscle(Muscle muscle) {
+        muscles.remove(muscle);
+        muscle.getExercises().remove(this);
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -65,5 +74,10 @@ public class Exercise implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hashCode(name);
+    }
+
+    @Override
+    public Class<?> getNameClass() {
+        return name.getClass();
     }
 }

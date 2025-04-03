@@ -1,12 +1,12 @@
-package com.dyns.persevero.domain.model;
+package com.dyns.persevero.domain.model.impl;
 
-import com.dyns.persevero.enums.MuscleType;
+import com.dyns.persevero.domain.model.Model;
+import com.dyns.persevero.enums.MuscleName;
 import jakarta.persistence.*;
 import lombok.*;
-import org.apache.logging.log4j.util.Strings;
 
 import java.io.Serial;
-import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @Builder
 @Entity
 @Table(name = "muscles")
-public class Muscle implements Serializable {
+public class Muscle implements Model<UUID, MuscleName> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -27,32 +27,49 @@ public class Muscle implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false)
-    private UUID id = UUID.randomUUID();
+    private UUID id;
 
     @Column(
             nullable = false,
             unique = true
     )
     @Enumerated(EnumType.STRING)
-    private MuscleType name = MuscleType.NONE;
+    private MuscleName name;
 
     @Column(
             length = 200,
             nullable = false
     )
-    private String description = Strings.EMPTY;
+    private String description;
 
     @ManyToOne(
-            cascade = {CascadeType.MERGE, CascadeType.REMOVE}
+            cascade = CascadeType.MERGE,
+            fetch = FetchType.EAGER
     )
-    @JoinColumn(name = "muscle_group_id")
+    @JoinColumn(name = "muscle_group_id", referencedColumnName = "id")
     private MuscleGroup muscleGroup;
 
     @ManyToMany(
             mappedBy = "muscles",
-            cascade = {CascadeType.MERGE, CascadeType.REMOVE}
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
+            fetch = FetchType.LAZY
     )
     private Set<Exercise> exercises;
+
+    public void setExercises(Set<Exercise> exercises) {
+        this.exercises = exercises;
+        exercises.forEach(this::addExercise);
+    }
+
+    public void addExercise(Exercise exercise) {
+        exercises.add(exercise);
+        exercise.getMuscles().add(this);
+    }
+
+    public void removeExercise(Exercise exercise) {
+        exercises.remove(exercise);
+        exercise.getMuscles().remove(this);
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -66,4 +83,8 @@ public class Muscle implements Serializable {
         return Objects.hashCode(name);
     }
 
+    @Override
+    public Class<?> getNameClass() {
+        return name.getClass();
+    }
 }
