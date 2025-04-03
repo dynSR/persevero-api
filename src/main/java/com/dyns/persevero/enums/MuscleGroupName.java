@@ -3,7 +3,7 @@ package com.dyns.persevero.enums;
 /**
  * Represents the major muscle groups in the human body.
  */
-public enum MuscleGroupType {
+public enum MuscleGroupName {
 
     NONE,
 

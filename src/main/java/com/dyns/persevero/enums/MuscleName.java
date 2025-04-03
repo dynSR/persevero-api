@@ -4,10 +4,11 @@ package com.dyns.persevero.enums;
  * Represents specific muscles within the human body.
  * <p>
  * Belongs to a major muscle groups.
- * @see MuscleGroupType
+ * @see MuscleGroupName
  */
-public enum MuscleType {
+public enum MuscleName {
 
+    // Used as a default value
     NONE,
 
     // LOWER BODY (Legs and lower posterior chain)
