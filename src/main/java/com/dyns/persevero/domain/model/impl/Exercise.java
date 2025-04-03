@@ -1,7 +1,10 @@
 package com.dyns.persevero.domain.model.impl;
 
 import com.dyns.persevero.domain.model.Model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.io.Serial;
@@ -32,6 +35,8 @@ public class Exercise implements Model<UUID, String> {
             nullable = false,
             unique = true
     )
+    @NotNull(message = "")
+    @NotBlank(message = "")
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -46,13 +51,18 @@ public class Exercise implements Model<UUID, String> {
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 1", nullable = false)
     private float weight;
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = {CascadeType.PERSIST})
     @JoinTable(
             name = "muscle_exercise",
             joinColumns = @JoinColumn(name = "muscle_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id")
     )
+    @JsonIgnore
     private Set<Muscle> muscles;
+
+    public void setMuscles(Set<Muscle> muscles) {
+        muscles.forEach(this::addMuscle);
+    }
 
     public void addMuscle(Muscle muscle) {
         muscles.add(muscle);
@@ -74,6 +84,18 @@ public class Exercise implements Model<UUID, String> {
     @Override
     public int hashCode() {
         return Objects.hashCode(name);
+    }
+
+    @Override
+    public String toString() {
+        return "Exercise{" +
+                "weight=" + weight +
+                ", reps=" + reps +
+                ", sets=" + sets +
+                ", description='" + description + '\'' +
+                ", name='" + name + '\'' +
+                ", id=" + id +
+                '}';
     }
 
     @Override

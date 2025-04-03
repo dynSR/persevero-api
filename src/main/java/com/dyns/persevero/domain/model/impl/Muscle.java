@@ -2,11 +2,12 @@ package com.dyns.persevero.domain.model.impl;
 
 import com.dyns.persevero.domain.model.Model;
 import com.dyns.persevero.enums.MuscleName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.io.Serial;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -34,30 +35,29 @@ public class Muscle implements Model<UUID, MuscleName> {
             unique = true
     )
     @Enumerated(EnumType.STRING)
+    @NotNull(message = "")
     private MuscleName name;
 
-    @Column(
-            length = 200,
-            nullable = false
-    )
+    @Column(length = 200)
     private String description;
 
-    @ManyToOne(
-            cascade = CascadeType.MERGE,
-            fetch = FetchType.EAGER
+    @ManyToOne
+    @JoinColumn(
+            name = "muscle_group_id", referencedColumnName = "id",
+            nullable = false
     )
-    @JoinColumn(name = "muscle_group_id", referencedColumnName = "id")
+    @NotNull(message = "Muscle group cannot be null, it should be the default one instead")
     private MuscleGroup muscleGroup;
 
     @ManyToMany(
             mappedBy = "muscles",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
             fetch = FetchType.LAZY
     )
+    @JsonIgnore
     private Set<Exercise> exercises;
 
     public void setExercises(Set<Exercise> exercises) {
-        this.exercises = exercises;
         exercises.forEach(this::addExercise);
     }
 
@@ -81,6 +81,16 @@ public class Muscle implements Model<UUID, MuscleName> {
     @Override
     public int hashCode() {
         return Objects.hashCode(name);
+    }
+
+    @Override
+    public String toString() {
+        return "Muscle{" +
+                "muscleGroup=" + muscleGroup +
+                ", description='" + description + '\'' +
+                ", name=" + name +
+                ", id=" + id +
+                '}';
     }
 
     @Override
