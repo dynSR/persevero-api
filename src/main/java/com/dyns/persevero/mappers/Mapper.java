@@ -1,4 +1,4 @@
-package com.dyns.persevero.mapper;
+package com.dyns.persevero.mappers;
 
 import java.io.Serializable;
 

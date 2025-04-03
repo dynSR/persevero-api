@@ -1,14 +1,15 @@
-package com.dyns.persevero.fixture;
+package com.dyns.persevero.fixtures.impl;
 
 
-import com.dyns.persevero.domain.model.Exercise;
+import com.dyns.persevero.domain.model.impl.Exercise;
+import com.dyns.persevero.fixtures.Fixture;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
-public class ExerciseFixture {
+public class ExerciseFixture implements Fixture<Exercise> {
 
     public final static int FIXTURES_AMOUNT = 8;
     private final List<Exercise> exercises = new ArrayList<>();

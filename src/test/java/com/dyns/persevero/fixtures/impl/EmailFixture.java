@@ -1,4 +1,4 @@
-package com.dyns.persevero.fixture;
+package com.dyns.persevero.fixtures.impl;
 
 
 import java.util.ArrayList;

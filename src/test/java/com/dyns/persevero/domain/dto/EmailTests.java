@@ -1,6 +1,6 @@
 package com.dyns.persevero.domain.dto;
 
-import com.dyns.persevero.fixture.EmailFixture;
+import com.dyns.persevero.fixtures.impl.EmailFixture;
 import com.dyns.persevero.utils.EmailValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;

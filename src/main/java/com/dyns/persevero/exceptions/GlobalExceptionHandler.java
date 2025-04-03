@@ -1,4 +1,4 @@
-package com.dyns.persevero.exception;
+package com.dyns.persevero.exceptions;
 
 import com.dyns.persevero.domain.dto.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
