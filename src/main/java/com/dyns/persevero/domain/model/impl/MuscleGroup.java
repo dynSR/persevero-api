@@ -33,13 +33,15 @@ public class MuscleGroup implements Model<UUID, MuscleGroupName> {
             unique = true
     )
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "")
+    @NotNull(message = "Muscle group name cannot be null")
     private MuscleGroupName name;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
-            mappedBy = "muscleGroup",
-            orphanRemoval = true
+            cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            },
+            mappedBy = "muscleGroup"
     )
     @JsonIgnore
     Set<Muscle> muscles;
@@ -50,11 +52,12 @@ public class MuscleGroup implements Model<UUID, MuscleGroupName> {
 
     public void addMuscle(Muscle muscle) {
         muscles.add(muscle);
-        muscle.setMuscleGroup(this);
+        if (muscle.getMuscleGroup() != this) muscle.setMuscleGroup(this);
     }
 
     public void removeMuscle(Muscle muscle) {
         muscles.remove(muscle);
+        muscle.setMuscleGroup(null);
     }
 
     @Override
@@ -80,5 +83,10 @@ public class MuscleGroup implements Model<UUID, MuscleGroupName> {
     @Override
     public Class<?> getNameClass() {
         return name.getClass();
+    }
+
+    @PreRemove
+    public void onPreRemove() {
+        muscles.forEach(muscle -> muscle.setMuscleGroup(null));
     }
 }

@@ -3,6 +3,7 @@ package com.dyns.persevero.domain.model.impl;
 import com.dyns.persevero.domain.model.Model;
 import com.dyns.persevero.enums.MuscleName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -35,7 +36,7 @@ public class Muscle implements Model<UUID, MuscleName> {
             unique = true
     )
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "")
+    @NotNull(message = "Muscle name cannot be null")
     private MuscleName name;
 
     @Column(length = 200)
@@ -43,11 +44,14 @@ public class Muscle implements Model<UUID, MuscleName> {
 
     @ManyToOne
     @JoinColumn(
-            name = "muscle_group_id", referencedColumnName = "id",
-            nullable = false
+            name = "muscle_group_id", referencedColumnName = "id"
     )
-    @NotNull(message = "Muscle group cannot be null, it should be the default one instead")
     private MuscleGroup muscleGroup;
+
+    public void setMuscleGroup(@Nullable MuscleGroup muscleGroup) {
+        this.muscleGroup = muscleGroup;
+        if (muscleGroup != null) muscleGroup.addMuscle(this);
+    }
 
     @ManyToMany(
             mappedBy = "muscles",
@@ -97,4 +101,5 @@ public class Muscle implements Model<UUID, MuscleName> {
     public Class<?> getNameClass() {
         return name.getClass();
     }
+
 }
