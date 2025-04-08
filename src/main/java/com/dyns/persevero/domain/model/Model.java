@@ -25,5 +25,5 @@ public interface Model<ID, NAME> extends Serializable {
      * @return The name class type
      * @implNote The best is to simply return {@code name.getClass()}
      */
-    Class<?> getNameClass();
+    Class<?> getNamePropertyClass();
 }

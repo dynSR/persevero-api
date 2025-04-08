@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.io.Serial;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -90,16 +91,21 @@ public class Muscle implements Model<UUID, MuscleName> {
     @Override
     public String toString() {
         return "Muscle{" +
-                "muscleGroup=" + muscleGroup +
-                ", description='" + description + '\'' +
+                "id=" + id +
                 ", name=" + name +
-                ", id=" + id +
+                ", description='" + description + '\'' +
+                ", muscleGroup=" + muscleGroup +
                 '}';
     }
 
     @Override
-    public Class<?> getNameClass() {
+    public Class<?> getNamePropertyClass() {
         return name.getClass();
     }
 
+    @PreRemove
+    public void onPreRemove() {
+        if (muscleGroup != null) muscleGroup.removeMuscle(this);
+        new HashSet<>(exercises).forEach(exercise -> exercise.removeMuscle(this));
+    }
 }

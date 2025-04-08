@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.io.Serial;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -51,7 +52,7 @@ public class Exercise implements Model<UUID, String> {
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 1", nullable = false)
     private float weight;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @ManyToMany
     @JoinTable(
             name = "muscle_exercise",
             joinColumns = @JoinColumn(name = "muscle_id", referencedColumnName = "id"),
@@ -89,17 +90,22 @@ public class Exercise implements Model<UUID, String> {
     @Override
     public String toString() {
         return "Exercise{" +
-                "weight=" + weight +
-                ", reps=" + reps +
-                ", sets=" + sets +
-                ", description='" + description + '\'' +
+                "id=" + id +
                 ", name='" + name + '\'' +
-                ", id=" + id +
+                ", description='" + description + '\'' +
+                ", sets=" + sets +
+                ", reps=" + reps +
+                ", weight=" + weight +
                 '}';
     }
 
     @Override
-    public Class<?> getNameClass() {
+    public Class<?> getNamePropertyClass() {
         return name.getClass();
+    }
+
+    @PreRemove
+    public void onPreRemove() {
+        new HashSet<>(muscles).forEach(muscle -> muscle.removeExercise(this));
     }
 }

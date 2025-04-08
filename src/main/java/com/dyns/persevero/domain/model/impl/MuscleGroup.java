@@ -75,13 +75,13 @@ public class MuscleGroup implements Model<UUID, MuscleGroupName> {
     @Override
     public String toString() {
         return "MuscleGroup{" +
-                "name=" + name +
-                ", id=" + id +
+                "id=" + id +
+                ", name=" + name +
                 '}';
     }
 
     @Override
-    public Class<?> getNameClass() {
+    public Class<?> getNamePropertyClass() {
         return name.getClass();
     }
 
