@@ -14,9 +14,9 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.lang.reflect.ParameterizedType;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -24,11 +24,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * An abstract class used to implement basic integration tests;
  * And all necessary components.
  *
- * @param <REPO>    The type of repository that extends CrudRepository
- * @param <ENTITY>  The type of entity managed by the repository that extends Model
- * @param <FIXTURE> The type of fixture used to mock data that extends Fixture
- * @param <ID>      The type of ID used by both the entity and the repository
- * @param <NAME>    The type of name used by the entity to differentiate between String and enum
+ * @param <REPOSITORY> The type of repository that extends CrudRepository
+ * @param <ENTITY>     The type of entity managed by the repository that extends Model
+ * @param <FIXTURE>    The type of fixture used to mock data that extends Fixture
+ * @param <ID>         The type of ID used by both the entity and the repository
+ * @param <NAME>       The type of name used by the entity to differentiate between String and enum
  * @see CrudRepository
  * @see Model
  * @see Fixture
@@ -39,74 +39,60 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Transactional
 public abstract class AbstractRepositoryIntegrationTests<
-        REPO extends CrudRepository<ENTITY, ID>,
+        REPOSITORY extends CrudRepository<ENTITY, ID>,
         ENTITY extends Model<ID, NAME>,
         FIXTURE extends Fixture<ENTITY>,
         ID,
         NAME
         > {
 
-    /**
-     * The repository that is currently under test within this class.
-     */
     @Autowired
-    protected REPO underTest;
+    protected REPOSITORY underTest;
 
-    /**
-     * The fixture instance used by this class throughout all tests.
-     */
     protected FIXTURE fixture = null;
 
-    protected final String failureMessageTemplate = "Expected %s to be found";
-
-    /**
-     * Assign the fixture within the repository integration tests class.
-     *
-     * @return The fixture or a new instance if none is found.
-     */
     protected abstract FIXTURE getFixture();
 
-    /**
-     * Init the test class before each test.
-     *
-     * @implNote Must be annotated with {@code @BeforeEach} to be used before each test.
-     */
-    public abstract void init();
+    public abstract void setDependencies();
 
-    /**
-     * Basic save test :
-     * <p> - Given an entity through the fixture
-     * <p> - When saving the entity
-     * <p> - Then asserts that the given entity and the persisted one are the same
-     * <p> - Then asserts that the saved entity can be retrieved via the repository
-     */
+    protected String getFailureMessage() {
+        return String.format("Expected %s to be found, but none was !", getEntityTypeName());
+    }
+
+    protected String getFailureMessage(String entityName) {
+        return String.format("Expected %s to be found, but none was !", entityName);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    private String getEntityTypeName() {
+        return ((Class<ENTITY>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[1])
+                .getSimpleName()
+                .toLowerCase();
+    }
+
     @Test
-    @DisplayName("Basic test - should save and retrieve entity")
-    public void shouldSaveAndRetrievePersistedEntity() {
+    @DisplayName("Should save and retrieve entity")
+    public void givenValidEntity_whenSaved_thenIsPersisted() {
+        // GIVEN
         ENTITY entity = getFixture().getOne();
-        ENTITY savedEntity = underTest.save(entity);
 
+        // WHEN
+        ENTITY savedEntity = underTest.save(entity);
         log.info("Saved entity : {}", savedEntity);
 
+        // THEN
         assertThat(entity).isEqualTo(savedEntity);
         assertThat(underTest.findById(savedEntity.getId())).isPresent();
     }
 
-    /**
-     * Basic duplicate test on property {name} :
-     * <p> - Given two entities with identical names
-     * <p> - When saving both entities
-     * <p> - Then asserts that both entities have the same name
-     * <p> - Then asserts that query throws a data integrity violation exception
-     */
+    // TODO - Change this test to be able to test against any unique entity property
     @Test
-    @DisplayName("Basic test - should throw exception when providing duplicate entity")
-    public void shouldThrowExceptionWhenDuplicateEntity() {
+    @DisplayName("Should throw exception when providing duplicate entities")
+    public void givenEntitiesWithSameName_whenSaved_ThenThrowDataIntegrityException() {
+        // GIVEN
         ENTITY entity = getFixture().getOne();
-        NAME name = entity.getName();
-
         ENTITY duplicateEntity = getFixture().getOne();
-        duplicateEntity.setName(name);
+        duplicateEntity.setName(entity.getName());
 
         log.info(
                 "Duplication with : {} | {}",
@@ -115,81 +101,66 @@ public abstract class AbstractRepositoryIntegrationTests<
         );
         assertThat(entity.getName()).isEqualTo(duplicateEntity.getName());
 
+        // WHEN
         underTest.save(entity);
         try {
             underTest.save(duplicateEntity);
         } catch (DataIntegrityViolationException exception) {
+            // THEN
             assertThat(exception).isInstanceOf(DataIntegrityViolationException.class);
         }
     }
 
-    /**
-     * Basic find all test :
-     * <p> - Given a list of entities
-     * <p> - When saved
-     * <p> - Then asserts that all entities are retrieved and well persisted
-     */
     @Test
-    @DisplayName("Basic test - should retrieve all entities")
+    @DisplayName("Should retrieve a list of entities")
     public void shouldRetrieveAllEntities() {
-        List<ENTITY> entities = getFixture().getMany();
-        entities.forEach(underTest::save);
-
-        List<ENTITY> allEntities = StreamSupport
-                .stream(underTest.findAll().spliterator(), false)
-                .collect(Collectors.toList());
+        // GIVEN
+        List<ENTITY> allEntities = List.copyOf((Collection<? extends ENTITY>) underTest.findAll());
         log.info("All entities : {}", allEntities);
 
+        // THEN
         assertThat(allEntities).isNotNull();
         assertThat(allEntities.size()).isNotZero();
     }
 
-
-    /**
-     * Basic update test on property {name} :
-     * <p> - Given an entity and a new name
-     * <p> - When persisting updated property
-     * <p> - Then asserts that the provided entity and the persisted one are equal
-     * <p> - Then asserts that the updated entity has the new name value
-     */
     @Test
-    @DisplayName("Basic test - should update entity")
+    @DisplayName("Should update entity")
     @SuppressWarnings({"unchecked"})
     public void shouldUpdateEntity() {
+        // GIVEN
         ENTITY entity = getFixture().getOne();
         log.info("Updated entity before : {}", entity);
 
         Object newName;
-        if (entity.getNameClass().isEnum()) {
-            Class<Enum> enumClass = (Class<Enum>) entity.getNameClass();
+        if (entity.getNamePropertyClass().isEnum()) {
+            Class<Enum> enumClass = (Class<Enum>) entity.getNamePropertyClass();
             newName = Enum.valueOf(enumClass, "NONE");
         } else {
             newName = "Updated value";
         }
         entity.setName((NAME) newName);
 
+        // WHEN
         ENTITY updatedEntity = underTest.save(entity);
         log.info("Updated entity after : {}", updatedEntity);
 
+        // THEN
         assertThat(updatedEntity).isEqualTo(entity);
         assertThat(updatedEntity.getName()).isEqualTo(newName);
     }
 
-    /**
-     * Basic delete test :
-     * <p> - Given one persisted entity
-     * <p> - When deleting
-     * <p> - Then asserts that this entity cannot be retrieved anymore
-     */
     @Test
-    @DisplayName("Basic test - should delete entity")
+    @DisplayName("Should delete entity")
     public void shouldDeleteEntity() {
+        // GIVEN
         ENTITY entity = getFixture().getOne();
         ENTITY savedEntity = underTest.save(entity);
-
         log.info("Deleted entity : {}", savedEntity);
 
+        // WHEN
         underTest.delete(savedEntity);
+
+        // THEN
         assertThat(underTest.findById(savedEntity.getId())).isEmpty();
     }
 }

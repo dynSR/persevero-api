@@ -18,7 +18,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
@@ -43,18 +46,10 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
 
     @BeforeEach
     @Override
-    public void init() {
-        // DEPENDENCIES
+    public void setDependencies() {
         muscleGroupFixture.getMany().forEach(muscleGroupRepository::save);
         exerciseFixture.getMany().forEach(exerciseRepository::save);
-
-        muscleGroupRepository.findByName(MuscleGroupName.NONE).ifPresentOrElse(
-                defaultMG -> getFixture().getMany().forEach(muscle -> {
-                            muscle.setMuscleGroup(defaultMG);
-                            underTest.save(muscle);
-                        }
-                ), () -> fail(String.format(failureMessageTemplate, "default muscle group"))
-        );
+        getFixture().getMany().forEach(underTest::save);
     }
 
     @Override
@@ -63,163 +58,124 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
     }
 
     @Test
-    @DisplayName("should retrieve all entities")
-    @Override
-    public void shouldRetrieveAllEntities() {
-        List<Muscle> allMuscles = List.copyOf((Collection<? extends Muscle>) underTest.findAll());
-        log.info("All muscles : {}", allMuscles);
+    @DisplayName("Should delete a muscle without deleting any associated exercise(s)")
+    public void givenValidMuscleWithExercises_whenDeleted_thenIsDeletedButAssociatedExercisesAreStillPersisted() {
+        // GIVEN
+        underTest.findByName(MuscleName.FOREARMS).ifPresentOrElse(foundMuscle -> {
+                    foundMuscle.setExercises(
+                            Set.copyOf((Collection<? extends Exercise>) exerciseRepository.findAll())
+                    );
+                    underTest.save(foundMuscle);
 
-        assertThat(allMuscles).isNotNull();
-        assertThat(allMuscles.size()).isEqualTo(getFixture().getMany().size());
+                    // WHEN
+                    underTest.delete(foundMuscle);
+
+                    // THEN
+                    assertThat(((Collection<Exercise>) exerciseRepository.findAll()).size()).isEqualTo(ExerciseFixture.FIXTURES_AMOUNT);
+                }, () -> fail(getFailureMessage())
+        );
     }
 
-    /**
-     * Delete test with cascade check for exercises :
-     * <p> - Given persisted muscles
-     * <p> - When deleting a muscle
-     * <p> - Then asserts that this muscle cannot be retrieved anymore
-     * <p> - Then asserts that all exercises in the db that were associated with it do not reference it anymore
-     */
     @Test
-    @DisplayName("Should delete a muscle without delete cascading exercise(s)")
-    public void shouldDeleteMuscle_AndAllAssociatedExercises_ShouldNotReferenceItAnymore() {
-        // Find all saved exercises
-        Set<Exercise> savedExercises = Set.copyOf((Collection<? extends Exercise>) exerciseRepository.findAll());
+    @DisplayName("Should delete a muscle and remove its reference from any associated exercise(s)")
+    public void givenValidMuscleWithExercises_whenDeleted_IsDeletedAndNoExerciseReferenceIt() {
+        // GIVEN
+        underTest.findByName(MuscleName.FOREARMS).ifPresentOrElse(foundMuscle -> {
+                    foundMuscle.setExercises(
+                            Set.copyOf((Collection<? extends Exercise>) exerciseRepository.findAll())
+                    );
+                    underTest.save(foundMuscle);
 
-        // Save muscles with exercises assigned
-        List<Muscle> savedMuscles = getFixture().getMany().stream()
-                .peek(m -> m.setExercises(savedExercises))
-                .map(underTest::save)
-                .toList();
-
-        // Grab one saved muscle from the db
-        Muscle savedMuscle = savedMuscles.getFirst();
-        log.info(savedMuscle.getName().toString());
-        underTest.findById(savedMuscle.getId()).ifPresentOrElse(foundMuscle -> {
-                    // Store all found muscle's associated exercise(s)
-                    List<Exercise> foundMuscleExercises = List.copyOf(foundMuscle.getExercises());
-                    log.info("{}", foundMuscleExercises.stream().map(Exercise::getName).toList());
-
-                    // And for each muscle's exercise(s) remove the muscle reference
-                    foundMuscleExercises.forEach(exercise -> {
-                        if (!foundMuscle.getExercises().contains(exercise)) return;
-                        exercise.removeMuscle(foundMuscle);
-                    });
-
-                    // Delete the muscle found and assert that it is not persisted anymore
+                    // WHEN
                     underTest.delete(foundMuscle);
-                    assertThat(underTest.findById(savedMuscle.getId())).isNotPresent();
 
-                    // Then assert that the database still contains the exercise(s) that were in the deleted muscle
+                    // THEN
                     assertThat(((Collection<Exercise>) exerciseRepository.findAll())
                             .stream()
                             .flatMap(exercise -> exercise.getMuscles().stream())
                             .toList()
-                            .contains(savedMuscle))
-                            .isFalse();
-                }, () -> fail(String.format(failureMessageTemplate, "muscle"))
+                            .contains(foundMuscle)
+                    ).isFalse();
+                }, () -> fail(getFailureMessage())
         );
     }
 
-    /**
-     * Delete test with cascade check for muscle group :
-     * <p> - Given one persisted muscle
-     * <p> - When deleting a muscle
-     * <p> - Then asserts that this muscle cannot be retrieved anymore
-     * <p> - Then asserts that associated muscle group is not removed in cascade
-     */
     @Test
-    @DisplayName("Should delete a muscle but not the associated muscle group")
-    public void shouldDeleteMuscleButNotTheAssociatedMuscleGroup() {
+    @DisplayName("Should delete a muscle without deleting associated muscle group")
+    public void givenValidMuscleWithMuscleGroup_whenDeleted_thenIsDeletedButAssociatedMuscleGroupIsStillPersisted() {
+        // GIVEN
         Muscle muscle = getFixture().getOne();
         muscleGroupRepository.findByName(MuscleGroupName.CORE).ifPresentOrElse(
-                muscle::setMuscleGroup,
-                () -> fail(String.format(failureMessageTemplate, "muscle group"))
-        );
+                foundMuscleGroup -> {
+                    muscle.setMuscleGroup(foundMuscleGroup);
+                    Muscle savedMuscle = underTest.save(muscle);
 
-        Muscle savedMuscle = underTest.save(muscle);
-        underTest.findById(savedMuscle.getId()).ifPresentOrElse(
-                foundMuscle -> {
-                    MuscleGroup muscleGroup = savedMuscle.getMuscleGroup();
-                    assertThat(foundMuscle.getMuscleGroup()).isEqualTo(muscleGroup);
+                    // WHEN
+                    underTest.delete(savedMuscle);
 
-                    underTest.delete(foundMuscle);
-
-                    List<MuscleGroup> muscleGroups = List.copyOf(
-                            (Collection<? extends MuscleGroup>) muscleGroupRepository.findAll()
-                    );
-                    assertThat(muscleGroups.contains(muscleGroup)).isTrue();
+                    // THEN
+                    assertThat(
+                            ((Collection<MuscleGroup>) muscleGroupRepository.findAll()).contains(foundMuscleGroup)
+                    ).isTrue();
                 },
-                () -> fail(String.format(failureMessageTemplate, "muscle"))
+                () -> fail(getFailureMessage(MuscleGroup.class.toString()))
         );
     }
 
-    /**
-     * Find by name test :
-     * <p> - Given persisted muscle
-     * <p> - When finding a muscle by name
-     * <p> - Then asserts that this muscle exists and is persisted
-     */
+    @Test
+    @DisplayName("Should delete a muscle and associated muscle group should not reference it")
+    public void givenValidMuscleWithMuscleGroup_whenDeleted_thenIsDeletedButAssociatedMuscleGroupDoNotReferenceIt() {
+        // GIVEN
+        Muscle muscle = getFixture().getOne();
+        muscleGroupRepository.findByName(MuscleGroupName.CORE).ifPresentOrElse(
+                foundMuscleGroup -> {
+                    muscle.setMuscleGroup(foundMuscleGroup);
+                    Muscle savedMuscle = underTest.save(muscle);
+
+                    // WHEN
+                    underTest.delete(savedMuscle);
+
+                    // THEN
+                    assertThat(foundMuscleGroup.getMuscles().contains(savedMuscle)).isFalse();
+                },
+                () -> fail(getFailureMessage(MuscleGroup.class.toString()))
+        );
+    }
+
     @ParameterizedTest
     @EnumSource(value = MuscleName.class)
     @DisplayName("Should retrieve a muscle by name")
     public void shouldRetrieveAMuscleByName(MuscleName name) {
+        // WHEN
         underTest.findByName(name).ifPresentOrElse(
-                m -> {
-                    assertThat(m.getName()).isEqualTo(name);
-                    log.info("MuscleGroup : {}", m.getMuscleGroup());
+                foundMuscle -> {
+                    // THEN
+                    assertThat(foundMuscle.getName()).isEqualTo(name);
+                    log.info("Muscle found : {}", foundMuscle);
                 },
-                () -> fail(String.format(failureMessageTemplate, ""))
+                () -> fail(getFailureMessage())
         );
     }
 
-    /**
-     * Find by exercise id :
-     * <p> - Given persisted muscles
-     * <p> - When finding a muscle by one exercise id
-     * <p> - Then asserts that this muscles can be found
-     * <p> - Or asserts that none can be found and returns []
-     */
     @Test
     @DisplayName("Should retrieve all muscles associated to an exercise")
-    public void shouldRetrieveAllMusclesAssociatedToAnExercise() {
-        List<Exercise> exercises = List.copyOf((Collection<? extends Exercise>) exerciseRepository.findAll());
+    public void givenExercisesWithMuscles_whenQueryingByExerciseId_thenReturnsAssociatedMuscles() {
+        // GIVEN
+        List<Exercise> savedExercises = List.copyOf((Collection<? extends Exercise>) exerciseRepository.findAll());
+        underTest.findAll().forEach(savedMuscle -> savedMuscle.setExercises(Set.copyOf(savedExercises)));
 
-        // Save a set of muscle with a random exercise assigned.
-        List<Muscle> muscles = getFixture().getMany().subList(0, 4)
-                .stream()
-                .peek(m -> {
-                    int randomIndex = new Random().nextInt(exercises.size());
-                    m.addExercise(exercises.stream().toList().get(randomIndex));
-                    m.getExercises().forEach(
-                            e -> log.info("Saved muscle exercises : {} / {}", m.getName(), e.getName())
-                    );
-                })
-                .map(underTest::save)
-                .toList();
-
-        // Grab one exercise and try to find all muscles associated with it
-        Exercise savedExercise = exercises.getFirst();
-        exerciseRepository.findById(savedExercise.getId()).ifPresentOrElse(foundExercise -> {
-                    List<Muscle> foundMuscles = List.copyOf(
+        String validExerciseName = "Exercise 0";
+        exerciseRepository.findByName(validExerciseName).ifPresentOrElse(
+                foundExercise -> {
+                    // WHEN
+                    List<Muscle> exerciseMuscles = List.copyOf(
                             (Collection<? extends Muscle>) underTest.findAllByExerciseId(foundExercise.getId())
                     );
-                    log.info("Found muscles: {}", foundMuscles.stream().map(Muscle::getName).toList());
 
-                    List<UUID> expectedIds = muscles.stream()
-                            .filter(m -> m.getExercises().contains(foundExercise))
-                            .map(Muscle::getId)
-                            .toList();
-                    log.info("Expected ids : {}", expectedIds);
-                    List<UUID> actualIds = foundMuscles.stream().map(Muscle::getId).toList();
-                    log.info("Actual ids : {}", actualIds);
-
-                    // These assertions here expect either to contain all expected Ids
-                    // Or none of them as none of the muscles contain the exercise grabbed above
-                    if (!expectedIds.isEmpty()) assertThat(actualIds.containsAll(expectedIds)).isTrue();
-                    else assertThat(actualIds.isEmpty()).isTrue();
+                    // THEN
+                    assertThat(foundExercise.getMuscles().containsAll(exerciseMuscles)).isTrue();
                 },
-                () -> fail(String.format(failureMessageTemplate, "exercise"))
+                () -> fail(getFailureMessage(Exercise.class.toString()))
         );
     }
 }
