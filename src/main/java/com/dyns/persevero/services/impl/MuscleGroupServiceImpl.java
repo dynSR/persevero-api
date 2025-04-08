@@ -32,7 +32,7 @@ public class MuscleGroupServiceImpl implements MuscleGroupService {
 
     @Override
     public MuscleGroup save(MuscleGroup entity) {
-        if (doesNotExist(entity.getId())) {
+        if (!isPersisted(entity.getId())) {
             throw new ResourceNotFoundException(
                     messageService.getMessage("errors.muscle_group.not_found_with_id", entity.getId())
             );
@@ -83,7 +83,7 @@ public class MuscleGroupServiceImpl implements MuscleGroupService {
     }
 
     @Override
-    public boolean doesNotExist(UUID uuid) {
-        return !muscleGroupRepository.existsById(uuid);
+    public boolean isPersisted(UUID uuid) {
+        return muscleGroupRepository.existsById(uuid);
     }
 }

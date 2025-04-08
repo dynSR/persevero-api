@@ -26,7 +26,7 @@ public class MuscleServiceImpl implements MuscleService {
 
     @Override
     public Muscle save(Muscle muscle) {
-        if (doesNotExist(muscle.getId())) {
+        if (!isPersisted(muscle.getId())) {
             throw new ResourceNotFoundException(
                     messageService.getMessage("error.muscle.not_found_with_id", muscle.getId())
             );
@@ -79,8 +79,8 @@ public class MuscleServiceImpl implements MuscleService {
     }
 
     @Override
-    public boolean doesNotExist(UUID uuid) {
-        return !muscleRepository.existsById(uuid);
+    public boolean isPersisted(UUID uuid) {
+        return muscleRepository.existsById(uuid);
     }
 
     @Override

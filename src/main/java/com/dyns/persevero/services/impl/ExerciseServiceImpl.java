@@ -25,7 +25,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public Exercise save(Exercise exercise) {
-        if (doesNotExist(exercise.getId())) {
+        if (!isPersisted(exercise.getId())) {
             throw new ResourceNotFoundException(
                     messageService.getMessage("error.exercise.not_found_with_id", exercise.getId())
             );
@@ -80,15 +80,15 @@ public class ExerciseServiceImpl implements ExerciseService {
 
 
     @Override
-    public boolean doesNotExist(UUID uuid) {
-        return !exerciseRepository.existsById(uuid);
+    public boolean isPersisted(UUID uuid) {
+        return exerciseRepository.existsById(uuid);
     }
 
     @Override
     public Exercise findByName(String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException(
-                    messageService.getMessage("error.argument.name_blank", name)
+                    messageService.getMessage("error.field.name.blank", name)
             );
         }
 
