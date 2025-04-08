@@ -14,5 +14,7 @@ error:
     not_found_with_id: 'Muscle group with id '{0}' was not found.'
     not_found_with_name: 'Muscle group with name '{0}' was not found.'
 
-  argument:
-    name_blank: 'Provided name '{0}' must not be blank.'
+  field:
+    name:
+      blank: 'Provided name '{0}' must not be blank.'
+      null: 'Provided name '{0}' cannot be null.'
