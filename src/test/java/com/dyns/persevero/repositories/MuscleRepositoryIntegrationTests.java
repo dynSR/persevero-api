@@ -59,7 +59,7 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
 
     @Test
     @DisplayName("Should delete a muscle without deleting any associated exercise(s)")
-    public void givenValidMuscleWithExercises_whenDeleted_thenIsDeletedButAssociatedExercisesAreStillPersisted() {
+    public void givenMuscleWithExercises_whenDeleted_thenIsDeletedButAssociatedExercisesAreStillPersisted() {
         // GIVEN
         underTest.findByName(MuscleName.FOREARMS).ifPresentOrElse(foundMuscle -> {
                     foundMuscle.setExercises(
@@ -71,14 +71,15 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
                     underTest.delete(foundMuscle);
 
                     // THEN
-                    assertThat(((Collection<Exercise>) exerciseRepository.findAll()).size()).isEqualTo(ExerciseFixture.FIXTURES_AMOUNT);
+                    assertThat(((Collection<Exercise>) exerciseRepository.findAll()).size())
+                            .isEqualTo(ExerciseFixture.FIXTURES_AMOUNT);
                 }, () -> fail(getFailureMessage())
         );
     }
 
     @Test
     @DisplayName("Should delete a muscle and remove its reference from any associated exercise(s)")
-    public void givenValidMuscleWithExercises_whenDeleted_IsDeletedAndNoExerciseReferenceIt() {
+    public void givenMuscleWithExercises_whenDeleted_IsDeletedAndNoExerciseReferenceIt() {
         // GIVEN
         underTest.findByName(MuscleName.FOREARMS).ifPresentOrElse(foundMuscle -> {
                     foundMuscle.setExercises(
@@ -102,7 +103,7 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
 
     @Test
     @DisplayName("Should delete a muscle without deleting associated muscle group")
-    public void givenValidMuscleWithMuscleGroup_whenDeleted_thenIsDeletedButAssociatedMuscleGroupIsStillPersisted() {
+    public void givenMuscleWithMuscleGroup_whenDeleted_thenIsDeletedButAssociatedMuscleGroupIsStillPersisted() {
         // GIVEN
         Muscle muscle = getFixture().getOne();
         muscleGroupRepository.findByName(MuscleGroupName.CORE).ifPresentOrElse(
@@ -124,11 +125,11 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
 
     @Test
     @DisplayName("Should delete a muscle and associated muscle group should not reference it")
-    public void givenValidMuscleWithMuscleGroup_whenDeleted_thenIsDeletedButAssociatedMuscleGroupDoNotReferenceIt() {
+    public void givenMuscleWithMuscleGroup_whenDeleted_thenIsDeletedButAssociatedMuscleGroupDoNotReferenceIt() {
         // GIVEN
-        Muscle muscle = getFixture().getOne();
         muscleGroupRepository.findByName(MuscleGroupName.CORE).ifPresentOrElse(
                 foundMuscleGroup -> {
+                    Muscle muscle = getFixture().getOne();
                     muscle.setMuscleGroup(foundMuscleGroup);
                     Muscle savedMuscle = underTest.save(muscle);
 
@@ -161,8 +162,11 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
     @DisplayName("Should retrieve all muscles associated to an exercise")
     public void givenExercisesWithMuscles_whenQueryingByExerciseId_thenReturnsAssociatedMuscles() {
         // GIVEN
-        List<Exercise> savedExercises = List.copyOf((Collection<? extends Exercise>) exerciseRepository.findAll());
-        underTest.findAll().forEach(savedMuscle -> savedMuscle.setExercises(Set.copyOf(savedExercises)));
+        List<Exercise> savedExercises = List.copyOf(
+                (Collection<? extends Exercise>) exerciseRepository.findAll()
+        );
+        underTest.findAll()
+                .forEach(savedMuscle -> savedMuscle.setExercises(Set.copyOf(savedExercises)));
 
         String validExerciseName = "Exercise 0";
         exerciseRepository.findByName(validExerciseName).ifPresentOrElse(

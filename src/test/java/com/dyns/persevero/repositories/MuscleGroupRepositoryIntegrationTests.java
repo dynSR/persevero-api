@@ -50,11 +50,13 @@ public class MuscleGroupRepositoryIntegrationTests extends AbstractRepositoryInt
 
     @Test
     @DisplayName("Should delete a muscle group without deleting any associated muscle(s)")
-    public void givenValidMuscleGroupWithMuscles_whenDeleted_thenIsDeletedButAssociatedMuscledAreStillPersisted() {
+    public void givenMuscleGroupWithMuscles_whenDeleted_thenIsDeletedButAssociatedMuscledAreStillPersisted() {
         // GIVEN
         underTest.findByName(MuscleGroupName.CORE).ifPresentOrElse(
                 foundMuscleGroup -> {
-                    List<Muscle> savedMuscles = List.copyOf((Collection<? extends Muscle>) muscleRepository.findAll());
+                    List<Muscle> savedMuscles = List.copyOf(
+                            (Collection<? extends Muscle>) muscleRepository.findAll()
+                    );
                     savedMuscles.forEach(
                             savedMuscle -> {
                                 savedMuscle.setMuscleGroup(foundMuscleGroup);
@@ -66,7 +68,9 @@ public class MuscleGroupRepositoryIntegrationTests extends AbstractRepositoryInt
                     underTest.delete(foundMuscleGroup);
 
                     // THEN
-                    assertThat(((Collection<Muscle>) muscleRepository.findAll()).size()).isEqualTo(MuscleFixture.FIXTURES_AMOUNT);
+                    assertThat(
+                            ((Collection<Muscle>) muscleRepository.findAll()).size()
+                    ).isEqualTo(MuscleFixture.FIXTURES_AMOUNT);
                 },
                 () -> fail(getFailureMessage())
         );
@@ -74,11 +78,13 @@ public class MuscleGroupRepositoryIntegrationTests extends AbstractRepositoryInt
 
     @Test
     @DisplayName("Should delete a muscle group and set muscle group as null to any associated muscle(s)")
-    public void givenValidMuscleGroupWithMuscles_whenDeleted_thenIsDeletedAndAssociatedMusclesHaveNullMuscleGroup() {
+    public void givenMuscleGroupWithMuscles_whenDeleted_thenIsDeletedAndAssociatedMusclesHaveNullMuscleGroup() {
         // GIVEN
         underTest.findByName(MuscleGroupName.CORE).ifPresentOrElse(
                 foundMuscleGroup -> {
-                    List<Muscle> savedMuscles = List.copyOf((Collection<? extends Muscle>) muscleRepository.findAll());
+                    List<Muscle> savedMuscles = List.copyOf(
+                            (Collection<? extends Muscle>) muscleRepository.findAll()
+                    );
                     savedMuscles.forEach(
                             savedMuscle -> {
                                 savedMuscle.setMuscleGroup(foundMuscleGroup);
@@ -90,8 +96,9 @@ public class MuscleGroupRepositoryIntegrationTests extends AbstractRepositoryInt
                     underTest.delete(foundMuscleGroup);
 
                     // THEN
-                    assertThat(savedMuscles.stream()
-                            .allMatch(savedMuscle -> savedMuscle.getMuscleGroup() == null)
+                    assertThat(
+                            savedMuscles.stream()
+                                    .allMatch(savedMuscle -> savedMuscle.getMuscleGroup() == null)
                     ).isTrue();
                 },
                 () -> fail(getFailureMessage())

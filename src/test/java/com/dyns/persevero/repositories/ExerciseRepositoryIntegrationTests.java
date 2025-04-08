@@ -50,7 +50,7 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
 
     @Test
     @DisplayName("Should delete an exercise without deleting any muscle(s)")
-    public void givenValidExercise_whenDeletingExercise_thenIsDeletedAndAssociatedMuscledAreStillPersisted() {
+    public void givenExercise_whenDeletingExercise_thenIsDeletedAndAssociatedMuscledAreStillPersisted() {
         // GIVEN
         String validExerciseName = "Exercise 0";
         underTest.findByName(validExerciseName).ifPresentOrElse(
@@ -64,8 +64,9 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
                     underTest.delete(foundExercise);
 
                     // THEN
-                    assertThat(((Collection<Muscle>) muscleRepository.findAll()).size())
-                            .isEqualTo(MuscleFixture.FIXTURES_AMOUNT);
+                    assertThat(
+                            ((Collection<Muscle>) muscleRepository.findAll()).size()
+                    ).isEqualTo(MuscleFixture.FIXTURES_AMOUNT);
                 },
                 () -> fail(getFailureMessage())
         );
@@ -73,7 +74,7 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
 
     @Test
     @DisplayName("Should delete an exercise and remove its reference from associated muscle(s)")
-    public void givenValidExercise_whenDeletingExercise_thenIsDeletedAndNoMuscledReferenceIt() {
+    public void givenExercise_whenDeletingExercise_thenIsDeletedAndNoMuscledReferenceIt() {
         // GIVEN
         String validExerciseName = "Exercise 0";
         underTest.findByName(validExerciseName).ifPresentOrElse(
@@ -87,10 +88,11 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
                     underTest.delete(foundExercise);
 
                     // THEN
-                    assertThat(((Collection<Muscle>) muscleRepository.findAll()).stream()
-                            .flatMap(muscle -> muscle.getExercises().stream())
-                            .collect(Collectors.toSet())
-                            .contains(foundExercise)
+                    assertThat(
+                            ((Collection<Muscle>) muscleRepository.findAll()).stream()
+                                    .flatMap(muscle -> muscle.getExercises().stream())
+                                    .collect(Collectors.toSet())
+                                    .contains(foundExercise)
                     ).isFalse();
                 },
                 () -> fail(getFailureMessage())
@@ -99,7 +101,7 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
 
     @Test
     @DisplayName("Should retrieve a list of exercises associated to a muscle (by id)")
-    public void givenValidMuscle_whenQueryingByMuscleId_thenReturnsAssociatedExercises() {
+    public void givenMuscle_whenQueryingByMuscleId_thenReturnsAssociatedExercises() {
         // GIVEN
         muscleRepository.findByName(MuscleName.BICEPS).ifPresentOrElse(
                 foundMuscle -> {
@@ -109,8 +111,9 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
                     muscleRepository.save(foundMuscle);
 
                     // WHEN
-                    List<Exercise> exercisesFound =
-                            List.copyOf((Collection<? extends Exercise>) underTest.findAllByMuscleId(foundMuscle.getId()));
+                    List<Exercise> exercisesFound = List.copyOf(
+                            (Collection<? extends Exercise>) underTest.findAllByMuscleId(foundMuscle.getId())
+                    );
 
                     // THEN
                     assertThat(exercisesFound.size()).isEqualTo(ExerciseFixture.FIXTURES_AMOUNT);

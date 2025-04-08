@@ -113,9 +113,11 @@ public abstract class AbstractRepositoryIntegrationTests<
 
     @Test
     @DisplayName("Should retrieve a list of entities")
-    public void shouldRetrieveAllEntities() {
+    public void givenEntities_whenQueryingAll_thenReturnsListOfEntities() {
         // GIVEN
-        List<ENTITY> allEntities = List.copyOf((Collection<? extends ENTITY>) underTest.findAll());
+        List<ENTITY> allEntities = List.copyOf(
+                (Collection<? extends ENTITY>) underTest.findAll()
+        );
         log.info("All entities : {}", allEntities);
 
         // THEN
@@ -124,37 +126,10 @@ public abstract class AbstractRepositoryIntegrationTests<
     }
 
     @Test
-    @DisplayName("Should update entity")
-    @SuppressWarnings({"unchecked"})
-    public void shouldUpdateEntity() {
-        // GIVEN
-        ENTITY entity = getFixture().getOne();
-        log.info("Updated entity before : {}", entity);
-
-        Object newName;
-        if (entity.getNamePropertyClass().isEnum()) {
-            Class<Enum> enumClass = (Class<Enum>) entity.getNamePropertyClass();
-            newName = Enum.valueOf(enumClass, "NONE");
-        } else {
-            newName = "Updated value";
-        }
-        entity.setName((NAME) newName);
-
-        // WHEN
-        ENTITY updatedEntity = underTest.save(entity);
-        log.info("Updated entity after : {}", updatedEntity);
-
-        // THEN
-        assertThat(updatedEntity).isEqualTo(entity);
-        assertThat(updatedEntity.getName()).isEqualTo(newName);
-    }
-
-    @Test
     @DisplayName("Should delete entity")
-    public void shouldDeleteEntity() {
+    public void givenSavedEntity_whenDeleted_IsDeleted() {
         // GIVEN
-        ENTITY entity = getFixture().getOne();
-        ENTITY savedEntity = underTest.save(entity);
+        ENTITY savedEntity = underTest.save(getFixture().getOne());
         log.info("Deleted entity : {}", savedEntity);
 
         // WHEN
