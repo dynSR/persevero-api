@@ -16,12 +16,10 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 @Builder
 @Entity
 @Table(name = "muscle_groups")
-public class MuscleGroup implements Model<UUID, MuscleGroupName> {
+public class MuscleGroup implements Model<UUID> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,18 +31,16 @@ public class MuscleGroup implements Model<UUID, MuscleGroupName> {
             unique = true
     )
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "Muscle group name cannot be null")
+    @NotNull
     private MuscleGroupName name;
 
-    @OneToMany(
-            cascade = {
-                    CascadeType.PERSIST,
-                    CascadeType.MERGE
-            },
-            mappedBy = "muscleGroup"
-    )
+    @OneToMany(mappedBy = "muscleGroup")
     @JsonIgnore
     Set<Muscle> muscles;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
 
     public void setMuscles(Set<Muscle> muscles) {
         muscles.forEach(this::addMuscle);
@@ -80,13 +76,9 @@ public class MuscleGroup implements Model<UUID, MuscleGroupName> {
                 '}';
     }
 
-    @Override
-    public Class<?> getNamePropertyClass() {
-        return name.getClass();
-    }
-
     @PreRemove
     public void onPreRemove() {
         muscles.forEach(muscle -> muscle.setMuscleGroup(null));
     }
+
 }

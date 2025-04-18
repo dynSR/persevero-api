@@ -1,24 +1,24 @@
-package com.dyns.persevero.domain.model;
+package com.dyns.persevero.domain.model.impl;
 
+import com.dyns.persevero.domain.model.Model;
 import com.dyns.persevero.enums.TokenType;
 import jakarta.persistence.*;
-import lombok.*;
-import org.apache.logging.log4j.util.Strings;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
-import java.io.Serializable;
-import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
+@Builder
 @Entity
 @Table(name = "tokens")
-public class Token implements Serializable {
+public class Token implements Model<UUID> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -26,28 +26,32 @@ public class Token implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false)
-    private UUID id = UUID.randomUUID();
+    private UUID id;
 
     @Column(nullable = false, updatable = false)
-    private String token = Strings.EMPTY;
+    private String token;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private TokenType type = TokenType.NONE;
+    private TokenType type;
 
     @Column(
             name = "revoked",
-            columnDefinition = "BOOLEAN DEFAULT FALSE",
+            columnDefinition = "BOOLEAN",
             nullable = false
     )
-    private boolean isRevoked = false;
+    private boolean isRevoked;
 
     @Column(
             name = "expires_at",
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            columnDefinition = "TIMESTAMP",
             updatable = false,
             nullable = false
     )
-    private Instant expiresAt = Instant.now(Clock.systemDefaultZone());
+    private Instant expiresAt;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
 
 }

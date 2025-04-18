@@ -1,9 +1,14 @@
-package com.dyns.persevero.domain.model;
+package com.dyns.persevero.domain.model.impl;
 
-import com.dyns.persevero.utils.EmailValidator;
+import com.dyns.persevero.utils.Validate;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import lombok.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -15,8 +20,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
+@Builder
 @Entity
 @Table(
         name = "users",
@@ -37,46 +41,57 @@ public class User implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false)
-    private UUID id = UUID.randomUUID();
+    private UUID id;
 
     @Column(
             length = 254,
             nullable = false
     )
-    @Email(regexp = EmailValidator.EMAIL_REGEX)
+    @Email(regexp = Validate.EMAIL_REGEX)
+    @Size(max = 254)
     private String email;
 
     @Column(nullable = false)
+    @NotBlank
     private String password;
 
     @Column(nullable = false)
+    @NotBlank
     private String name;
 
     @CreationTimestamp
     @Column(
             name = "created_at",
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            columnDefinition = "TIMESTAMP",
             updatable = false
     )
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(
             name = "updated_at",
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+            columnDefinition = "TIMESTAMP"
     )
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
     @Column(
             name = "active",
             columnDefinition = "BOOLEAN DEFAULT TRUE"
     )
-    private boolean isActive = true;
+    private boolean isActive;
 
     @Column(
             name = "enabled",
             columnDefinition = "BOOLEAN DEFAULT FALSE"
     )
-    private boolean isEnabled = false;
+    private boolean isEnabled;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
+
+    private void setCreatedAt(LocalDateTime dateTime) {
+        createdAt = dateTime;
+    }
 
 }

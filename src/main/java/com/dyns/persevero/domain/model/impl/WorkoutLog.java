@@ -1,7 +1,11 @@
-package com.dyns.persevero.domain.model;
+package com.dyns.persevero.domain.model.impl;
 
 import jakarta.persistence.*;
-import lombok.*;
+import jakarta.validation.constraints.Min;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serial;
@@ -12,8 +16,6 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 @Builder
 @Entity
 @Table(name = "workout_logs")
@@ -25,13 +27,22 @@ public class WorkoutLog implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false)
-    private UUID id= UUID.randomUUID();
+    private UUID id;
 
-    @Column(columnDefinition = "SMALLINT DEFAULT 1", nullable = false)
-    private int totalDuration = 0;
+    @Column(columnDefinition = "SMALLINT", nullable = false)
+    @Min(value = 1L)
+    private int totalDuration;
 
     @Column(name = "completed_at", updatable = false, nullable = false)
     @CreationTimestamp
-    private LocalDateTime completedAt = LocalDateTime.now();
+    private LocalDateTime completedAt;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
+
+    private void setCompletedAt(LocalDateTime dateTime) {
+        completedAt = dateTime;
+    }
 
 }

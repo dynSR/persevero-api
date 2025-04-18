@@ -1,5 +1,6 @@
-package com.dyns.persevero.domain.model;
+package com.dyns.persevero.domain.model.impl;
 
+import com.dyns.persevero.domain.model.Model;
 import com.dyns.persevero.enums.WorkoutStatus;
 import com.dyns.persevero.enums.Visibility;
 import jakarta.persistence.*;
@@ -14,12 +15,10 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 @Builder
 @Entity
 @Table(name = "workouts")
-public class Workout implements Serializable {
+public class Workout implements Model<UUID> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -27,27 +26,27 @@ public class Workout implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false)
-    private UUID id = UUID.randomUUID();
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private WorkoutStatus status = WorkoutStatus.PLANNED;
+    private WorkoutStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Visibility visibility = Visibility.PRIVATE;
+    private Visibility visibility;
 
-    @Column(columnDefinition = "SMALLINT DEFAULT 1", nullable = false)
-    private int duration = 0;
+    @Column(columnDefinition = "SMALLINT", nullable = false)
+    private int duration;
 
     @Column(
             name = "created_at",
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            columnDefinition = "TIMESTAMP",
             updatable = false,
             nullable = false
     )
     @CreationTimestamp
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @Column(
             name = "share_code",
@@ -55,6 +54,14 @@ public class Workout implements Serializable {
             nullable = false,
             unique = true
     )
-    private String shareCode = UUID.randomUUID().toString();
+    private String shareCode;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
+
+    private void setCreatedAt(LocalDateTime dateTime) {
+        createdAt = dateTime;
+    }
 
 }

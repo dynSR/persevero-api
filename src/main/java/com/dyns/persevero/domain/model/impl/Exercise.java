@@ -3,11 +3,14 @@ package com.dyns.persevero.domain.model.impl;
 import com.dyns.persevero.domain.model.Model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -16,12 +19,10 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 @Builder
 @Entity
 @Table(name = "exercises")
-public class Exercise implements Model<UUID, String> {
+public class Exercise implements Model<UUID> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -36,30 +37,36 @@ public class Exercise implements Model<UUID, String> {
             nullable = false,
             unique = true
     )
-    @NotNull(message = "")
-    @NotBlank(message = "")
+    @NotBlank
+    @Size(max = 150)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(columnDefinition = "SMALLINT DEFAULT 1", nullable = false)
-    private int sets;
+    @Column(columnDefinition = "SMALLINT", nullable = false)
+    @NotNull
+    @Min(value = 1L)
+    private Integer sets;
 
-    @Column(columnDefinition = "SMALLINT DEFAULT 1", nullable = false)
-    private int reps;
+    @Column(columnDefinition = "SMALLINT", nullable = false)
+    @NotNull
+    @Min(value = 1L)
+    private Integer reps;
 
-    @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 1", nullable = false)
-    private float weight;
+    @Column(columnDefinition = "DECIMAL(5,2)", nullable = false)
+    @NotNull
+    @DecimalMax(value = "999.99")
+    @DecimalMin(value = "1.00")
+    private BigDecimal weight;
 
-    @ManyToMany
-    @JoinTable(
-            name = "muscle_exercise",
-            joinColumns = @JoinColumn(name = "muscle_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id")
-    )
+    @ManyToMany(mappedBy = "exercises")
     @JsonIgnore
     private Set<Muscle> muscles;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
 
     public void setMuscles(Set<Muscle> muscles) {
         muscles.forEach(this::addMuscle);
@@ -99,13 +106,9 @@ public class Exercise implements Model<UUID, String> {
                 '}';
     }
 
-    @Override
-    public Class<?> getNamePropertyClass() {
-        return name.getClass();
-    }
-
     @PreRemove
     public void onPreRemove() {
         new HashSet<>(muscles).forEach(muscle -> muscle.removeExercise(this));
     }
+
 }
