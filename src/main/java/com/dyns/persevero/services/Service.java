@@ -8,6 +8,8 @@ public interface Service<T, ID> {
 
     T findOne(ID id);
 
+    T fullUpdate(ID id, T entity);
+
     T partialUpdate(ID id, T entity);
 
     void delete(ID id);

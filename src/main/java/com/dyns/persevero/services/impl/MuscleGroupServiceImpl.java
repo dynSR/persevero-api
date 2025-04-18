@@ -1,5 +1,6 @@
 package com.dyns.persevero.services.impl;
 
+import com.dyns.persevero.domain.model.impl.Exercise;
 import com.dyns.persevero.domain.model.impl.MuscleGroup;
 import com.dyns.persevero.enums.MuscleGroupName;
 import com.dyns.persevero.exceptions.ResourceNotFoundException;
@@ -9,6 +10,7 @@ import com.dyns.persevero.services.MuscleGroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -18,39 +20,46 @@ import java.util.UUID;
 public class MuscleGroupServiceImpl implements MuscleGroupService {
 
     private final MuscleGroupRepository muscleGroupRepository;
-
-    @Autowired
-    private MessageService messageService;
+    private final MessageService messageService;
 
     @Override
-    public MuscleGroup findByName(MuscleGroupName name) {
-        return muscleGroupRepository.findByName(name)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        messageService.getMessage("errors.muscle_group.not_found_with_name", name)
-                ));
+    @Transactional
+    public MuscleGroup save(MuscleGroup muscleGroup) {
+        return muscleGroupRepository.save(muscleGroup);
     }
 
     @Override
-    public MuscleGroup save(MuscleGroup entity) {
-        if (!isPersisted(entity.getId())) {
-            throw new ResourceNotFoundException(
-                    messageService.getMessage("errors.muscle_group.not_found_with_id", entity.getId())
-            );
-        }
-
-        return muscleGroupRepository.save(entity);
-    }
-
-    @Override
+    @Transactional(readOnly = true)
     public Iterable<MuscleGroup> findAll() {
         return muscleGroupRepository.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MuscleGroup findOne(UUID uuid) {
         return muscleGroupRepository.findById(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        messageService.getMessage("errors.muscle_group.not_found_with_id", uuid)
+                        messageService.getMessage(
+                                "errors.entity.not_found",
+                                MuscleGroup.class.getSimpleName(),
+                                uuid
+                        )
+                ));
+    }
+
+    @Override
+    public MuscleGroup fullUpdate(UUID uuid, MuscleGroup muscleGroup) {
+        return muscleGroupRepository.findById(uuid)
+                .map(foundMuscleGroup -> {
+                    foundMuscleGroup.setName(muscleGroup.getName());
+                    return muscleGroupRepository.save(foundMuscleGroup);
+                })
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageService.getMessage(
+                                "error.entity.notFound",
+                                MuscleGroup.class.getSimpleName(),
+                                uuid
+                        )
                 ));
     }
 
@@ -65,25 +74,46 @@ public class MuscleGroupServiceImpl implements MuscleGroupService {
                         }
                 )
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        messageService.getMessage("errors.muscle_group.not_found_with_id", uuid)
+                        messageService.getMessage(
+                                "errors.entity.not_found",
+                                MuscleGroup.class.getSimpleName(),
+                                uuid
+                        )
                 ));
     }
 
     @Override
+    @Transactional
     public void delete(UUID uuid) {
-        muscleGroupRepository.findById(uuid)
-                .ifPresentOrElse(
-                        muscleGroupRepository::delete,
-                        () -> {
-                            throw new ResourceNotFoundException(
-                                    messageService.getMessage("errors.muscle_group.not_found_with_id", uuid)
-                            );
-                        }
-                );
+        muscleGroupRepository.findById(uuid).ifPresentOrElse(
+                muscleGroupRepository::delete,
+                () -> {
+                    throw new ResourceNotFoundException(
+                            messageService.getMessage(
+                                    "errors.entity.not_found",
+                                    MuscleGroup.class.getSimpleName(),
+                                    uuid
+                            )
+                    );
+                }
+        );
     }
 
     @Override
     public boolean isPersisted(UUID uuid) {
         return muscleGroupRepository.existsById(uuid);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MuscleGroup findByName(MuscleGroupName name) {
+        return muscleGroupRepository.findByName(name)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageService.getMessage(
+                                "errors.entity.not_found_with_name",
+                                MuscleGroup.class.getSimpleName(),
+                                name
+                        )
+                ));
     }
 }
