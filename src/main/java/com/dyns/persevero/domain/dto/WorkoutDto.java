@@ -2,33 +2,48 @@ package com.dyns.persevero.domain.dto;
 
 import com.dyns.persevero.enums.Visibility;
 import com.dyns.persevero.enums.WorkoutStatus;
+import com.dyns.persevero.validations.validators.EnumValidator;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Data
-@Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class WorkoutDto {
-    // TODO: Set validation messages
 
-    @NotNull(message = "")
+    private UUID id;
+
+    @EnumValidator(enumClass = WorkoutStatus.class)
     private WorkoutStatus status;
 
-    @NotNull(message = "")
+    @EnumValidator(enumClass = Visibility.class)
     private Visibility visibility;
 
-    @NotNull(message = "")
-    @Min(value = 1, message = "{value}")
+    @Min(value = 1L)
     private int duration;
 
-    @NotNull(message = "")
-    @NotBlank(message = "")
+    private LocalDateTime createdAt;
+
     private String shareCode;
+
+    private UserDto owner;
+
+    private List<ExerciseDto> exercises;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
+
+    private void setCreatedAt(LocalDateTime dateTime) {
+        createdAt = dateTime;
+    }
 
 }

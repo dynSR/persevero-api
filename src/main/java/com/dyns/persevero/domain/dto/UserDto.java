@@ -1,24 +1,39 @@
 package com.dyns.persevero.domain.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.dyns.persevero.validations.validators.EmailValidator;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
-@Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class UserDto {
-    // TODO: Set validation messages
 
-    @NotNull(message = "")
-    @NotBlank(message = "")
+    private UUID id;
+
+    @EmailValidator
     private String email;
 
     private boolean isActive;
 
     private boolean isEnabled;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
+
+    private void setCreatedAt(LocalDateTime dateTime) {
+        createdAt = dateTime;
+    }
+
 }

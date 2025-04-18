@@ -1,28 +1,37 @@
 package com.dyns.persevero.domain.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.dyns.persevero.enums.MuscleName;
+import com.dyns.persevero.validations.validators.EnumValidator;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
+
+import java.util.Set;
+import java.util.UUID;
 
 @Data
-@Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class MuscleDto {
-    // TODO: Set validation messages
 
-    @NotNull(message = "")
-    @NotBlank(message = "")
-    @Size(max = 150, message = "{max}")
-    private String name;
+    private UUID id;
 
-    @NotNull(message = "")
-    @NotBlank(message = "")
-    @Size(max = 200, message = "{max}")
+    @EnumValidator(enumClass = MuscleName.class)
+    private MuscleName name;
+
+    @Size(max = 200)
     private String description;
+
+    private MuscleGroupDto muscleGroup;
+
+    private Set<ExerciseDto> exercises;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
 
 }

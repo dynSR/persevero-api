@@ -1,32 +1,36 @@
 package com.dyns.persevero.domain.dto;
 
 import com.dyns.persevero.enums.TokenType;
+import com.dyns.persevero.validations.validators.EnumValidator;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Data
-@Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class TokenDto {
-    // TODO: Set validation messages
 
-    @NotNull(message = "")
-    @NotBlank(message = "")
+    @NotBlank
     private String token;
 
-    @NotNull(message = "")
+    @NotNull
+    @EnumValidator(enumClass = TokenType.class)
     private TokenType type;
 
-    @NotNull(message = "")
+    @NotNull
     private boolean isRevoked;
 
-    @NotNull(message = "")
+    @NotNull
     private Instant expiresAt;
+
+    @NotNull
+    private UserDto owner;
+
 }

@@ -1,36 +1,45 @@
 package com.dyns.persevero.domain.dto;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.validator.constraints.Range;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.Set;
+import java.util.UUID;
 
 @Data
-@Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class ExerciseDto {
-    // TODO: Set validation messages
 
-    @NotNull(message = "")
-    @NotBlank(message = "")
-    @Size(max = 150, message = "{max}")
+    private UUID id;
+
+    @Size(max = 150)
     private String name;
 
     private String description;
 
-    @Min(value = 1, message = "{value}")
-    private int sets;
+    @Min(value = 1L)
+    private Integer sets;
 
-    @Min(value = 1, message = "{value}")
-    private int reps;
+    @Min(value = 1L)
+    private Integer reps;
 
-    @Range(min = 1, max = 999, message = "{min} {max}")
-    private float weight;
+    @DecimalMax(value = "999.99")
+    @DecimalMin(value = "1.00")
+    private BigDecimal weight;
+
+    private Set<MuscleDto> muscles;
+
+    private void setId(UUID uuid) {
+        id = uuid;
+    }
 
 }
