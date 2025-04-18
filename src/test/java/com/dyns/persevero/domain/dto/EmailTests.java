@@ -1,7 +1,7 @@
 package com.dyns.persevero.domain.dto;
 
 import com.dyns.persevero.fixtures.impl.EmailFixture;
-import com.dyns.persevero.utils.EmailValidator;
+import com.dyns.persevero.utils.Validate;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ public class EmailTests {
         validEmails.forEach(
                 email -> {
                     log.info(getInfo(email));
-                    assertTrue(EmailValidator.isValidEmail(email));
+                    assertTrue(Validate.isEmailValid(email));
                 }
         );
     }
@@ -41,7 +41,7 @@ public class EmailTests {
         invalidEmails.forEach(
                 email -> {
                     log.info(getInfo(email));
-                    assertFalse(EmailValidator.isValidEmail(email));
+                    assertFalse(Validate.isEmailValid(email));
                 }
         );
     }
@@ -52,14 +52,14 @@ public class EmailTests {
         log.info(getInfo(invalidEmails.getFirst()));
         log.info(getInfo(validEmails.getLast()));
 
-        assertFalse(EmailValidator.isValidEmail(invalidEmails.getFirst()));
-        assertTrue(EmailValidator.isValidEmail(validEmails.getLast()));
+        assertFalse(Validate.isEmailValid(invalidEmails.getFirst()));
+        assertTrue(Validate.isEmailValid(validEmails.getLast()));
     }
 
     private String getInfo(String email) {
         return String.format("%s :  is valid ? %b",
                 email,
-                EmailValidator.isValidEmail(email)
+                Validate.isEmailValid(email)
         );
     }
 }

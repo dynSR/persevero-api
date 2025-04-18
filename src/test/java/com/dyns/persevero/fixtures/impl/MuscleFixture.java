@@ -7,16 +7,13 @@ import com.dyns.persevero.fixtures.Fixture;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 
 public class MuscleFixture implements Fixture<Muscle> {
 
-    public final static int FIXTURES_AMOUNT = MuscleName.values().length;
     private final List<Muscle> muscles = new ArrayList<>();
 
     public Muscle getOne() {
-        int randomIndex = new Random().nextInt(FIXTURES_AMOUNT - 1);
-        return getMany().get(randomIndex);
+        return getMany().getFirst();
     }
 
     public List<Muscle> getMany() {
@@ -32,4 +29,10 @@ public class MuscleFixture implements Fixture<Muscle> {
 
         return muscles;
     }
+
+    @Override
+    public long getCreatedAmount() {
+        return MuscleName.values().length;
+    }
+
 }

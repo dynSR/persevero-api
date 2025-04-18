@@ -8,5 +8,6 @@ public interface Fixture<T> {
 
     T getOne();
 
+    long getCreatedAmount();
 }
 

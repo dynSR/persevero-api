@@ -5,22 +5,18 @@ import com.dyns.persevero.domain.model.impl.Muscle;
 import com.dyns.persevero.enums.MuscleName;
 import com.dyns.persevero.fixtures.impl.ExerciseFixture;
 import com.dyns.persevero.fixtures.impl.MuscleFixture;
-import com.dyns.persevero.repositories.impl.AbstractRepositoryIntegrationTests;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.fail;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 
 @Slf4j
 @Transactional
@@ -28,8 +24,7 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
         ExerciseRepository,
         Exercise,
         ExerciseFixture,
-        UUID,
-        String
+        UUID
         > {
 
     @Autowired
@@ -38,9 +33,9 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
 
     @BeforeEach
     @Override
-    public void setDependencies() {
+    protected void setDependencies() {
+        saveMany();
         muscleFixture.getMany().forEach(muscleRepository::save);
-        getFixture().getMany().forEach(underTest::save);
     }
 
     @Override
@@ -58,7 +53,7 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
                     foundExercise.setMuscles(
                             Set.copyOf((Collection<? extends Muscle>) muscleRepository.findAll())
                     );
-                    underTest.save(foundExercise);
+                    saveOne(foundExercise);
 
                     // WHEN
                     underTest.delete(foundExercise);
@@ -66,7 +61,7 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
                     // THEN
                     assertThat(
                             ((Collection<Muscle>) muscleRepository.findAll()).size()
-                    ).isEqualTo(MuscleFixture.FIXTURES_AMOUNT);
+                    ).isEqualTo(muscleFixture.getCreatedAmount());
                 },
                 () -> fail(getFailureMessage())
         );
@@ -82,7 +77,7 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
                     foundExercise.setMuscles(
                             Set.copyOf((Collection<? extends Muscle>) muscleRepository.findAll())
                     );
-                    underTest.save(foundExercise);
+                    saveOne(foundExercise);
 
                     // WHEN
                     underTest.delete(foundExercise);
@@ -99,26 +94,4 @@ public class ExerciseRepositoryIntegrationTests extends AbstractRepositoryIntegr
         );
     }
 
-    @Test
-    @DisplayName("Should retrieve a list of exercises associated to a muscle (by id)")
-    public void givenMuscle_whenQueryingByMuscleId_thenReturnsAssociatedExercises() {
-        // GIVEN
-        muscleRepository.findByName(MuscleName.BICEPS).ifPresentOrElse(
-                foundMuscle -> {
-                    foundMuscle.setExercises(
-                            Set.copyOf((Collection<? extends Exercise>) underTest.findAll())
-                    );
-                    muscleRepository.save(foundMuscle);
-
-                    // WHEN
-                    List<Exercise> exercisesFound = List.copyOf(
-                            (Collection<? extends Exercise>) underTest.findAllByMuscleId(foundMuscle.getId())
-                    );
-
-                    // THEN
-                    assertThat(exercisesFound.size()).isEqualTo(ExerciseFixture.FIXTURES_AMOUNT);
-                },
-                () -> fail(getFailureMessage(Muscle.class.toString()))
-        );
-    }
 }

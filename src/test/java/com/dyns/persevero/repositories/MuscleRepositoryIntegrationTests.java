@@ -8,7 +8,6 @@ import com.dyns.persevero.enums.MuscleName;
 import com.dyns.persevero.fixtures.impl.ExerciseFixture;
 import com.dyns.persevero.fixtures.impl.MuscleFixture;
 import com.dyns.persevero.fixtures.impl.MuscleGroupFixture;
-import com.dyns.persevero.repositories.impl.AbstractRepositoryIntegrationTests;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,14 +16,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.fail;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 
 @Slf4j
 @Transactional
@@ -32,8 +28,7 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
         MuscleRepository,
         Muscle,
         MuscleFixture,
-        UUID,
-        MuscleName
+        UUID
         > {
 
     @Autowired
@@ -46,10 +41,10 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
 
     @BeforeEach
     @Override
-    public void setDependencies() {
+    protected void setDependencies() {
+        saveMany();
         muscleGroupFixture.getMany().forEach(muscleGroupRepository::save);
         exerciseFixture.getMany().forEach(exerciseRepository::save);
-        getFixture().getMany().forEach(underTest::save);
     }
 
     @Override
@@ -65,14 +60,14 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
                     foundMuscle.setExercises(
                             Set.copyOf((Collection<? extends Exercise>) exerciseRepository.findAll())
                     );
-                    underTest.save(foundMuscle);
+                    saveOne(foundMuscle);
 
                     // WHEN
                     underTest.delete(foundMuscle);
 
                     // THEN
                     assertThat(((Collection<Exercise>) exerciseRepository.findAll()).size())
-                            .isEqualTo(ExerciseFixture.FIXTURES_AMOUNT);
+                            .isEqualTo(exerciseFixture.getCreatedAmount());
                 }, () -> fail(getFailureMessage())
         );
     }
@@ -85,7 +80,7 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
                     foundMuscle.setExercises(
                             Set.copyOf((Collection<? extends Exercise>) exerciseRepository.findAll())
                     );
-                    underTest.save(foundMuscle);
+                    saveOne(foundMuscle);
 
                     // WHEN
                     underTest.delete(foundMuscle);
@@ -109,7 +104,7 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
         muscleGroupRepository.findByName(MuscleGroupName.CORE).ifPresentOrElse(
                 foundMuscleGroup -> {
                     muscle.setMuscleGroup(foundMuscleGroup);
-                    Muscle savedMuscle = underTest.save(muscle);
+                    Muscle savedMuscle = getSavedEntity(muscle);
 
                     // WHEN
                     underTest.delete(savedMuscle);
@@ -131,7 +126,7 @@ public class MuscleRepositoryIntegrationTests extends AbstractRepositoryIntegrat
                 foundMuscleGroup -> {
                     Muscle muscle = getFixture().getOne();
                     muscle.setMuscleGroup(foundMuscleGroup);
-                    Muscle savedMuscle = underTest.save(muscle);
+                    Muscle savedMuscle = getSavedEntity(muscle);
 
                     // WHEN
                     underTest.delete(savedMuscle);

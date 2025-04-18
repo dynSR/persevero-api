@@ -5,7 +5,6 @@ import com.dyns.persevero.domain.model.impl.MuscleGroup;
 import com.dyns.persevero.enums.MuscleGroupName;
 import com.dyns.persevero.fixtures.impl.MuscleFixture;
 import com.dyns.persevero.fixtures.impl.MuscleGroupFixture;
-import com.dyns.persevero.repositories.impl.AbstractRepositoryIntegrationTests;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,8 +27,7 @@ public class MuscleGroupRepositoryIntegrationTests extends AbstractRepositoryInt
         MuscleGroupRepository,
         MuscleGroup,
         MuscleGroupFixture,
-        UUID,
-        MuscleGroupName
+        UUID
         > {
 
     @Autowired
@@ -38,12 +36,11 @@ public class MuscleGroupRepositoryIntegrationTests extends AbstractRepositoryInt
 
     @BeforeEach
     @Override
-    public void setDependencies() {
-        getFixture().getMany().forEach(underTest::save);
+    protected void setDependencies() {
+        saveMany();
         muscleFixture.getMany().forEach(muscleRepository::save);
     }
 
-    @Override
     protected MuscleGroupFixture getFixture() {
         return fixture != null ? fixture : new MuscleGroupFixture();
     }
@@ -70,7 +67,7 @@ public class MuscleGroupRepositoryIntegrationTests extends AbstractRepositoryInt
                     // THEN
                     assertThat(
                             ((Collection<Muscle>) muscleRepository.findAll()).size()
-                    ).isEqualTo(MuscleFixture.FIXTURES_AMOUNT);
+                    ).isEqualTo(muscleFixture.getCreatedAmount());
                 },
                 () -> fail(getFailureMessage())
         );
