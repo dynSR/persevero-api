@@ -8,6 +8,12 @@ public interface ExerciseService extends Service<Exercise, UUID> {
 
     Exercise findByName(String name);
 
-    Iterable<Exercise> findAllByMuscleId(UUID muscleId);
+    void addMuscle(UUID exerciseId, UUID muscleId);
+
+    void removeMuscle(UUID exerciseId, UUID muscleId);
+
+    void addMuscles(UUID uuid, Iterable<UUID> muscleIds);
+
+    void removeMuscles(UUID uuid, Iterable<UUID> muscleIds);
 
 }
